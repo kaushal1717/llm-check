@@ -2,8 +2,8 @@
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use llm_check::config::AppConfig;
 use llm_check::models::{
-    PerformanceEngine, PerformancePredictor, VramEstimator, calculate_eco, discover_models,
-    fetch_metadata, SUPPORTED_REGIONS,
+    PerformanceEngine, PerformancePredictor, SUPPORTED_REGIONS, VramEstimator, calculate_eco,
+    discover_models, fetch_metadata,
 };
 use llm_check::{display_hardware_report, hardware, ui};
 use owo_colors::OwoColorize;
@@ -98,13 +98,27 @@ async fn main() {
                 display_hardware_report();
             }
         }
-        Commands::Check { model_id, quant, eco } => {
-            let sp = if !is_json { Some(ui::spinner(&format!("Fetching metadata for {}...", model_id))) } else { None };
+        Commands::Check {
+            model_id,
+            quant,
+            eco,
+        } => {
+            let sp = if !is_json {
+                Some(ui::spinner(&format!(
+                    "Fetching metadata for {}...",
+                    model_id
+                )))
+            } else {
+                None
+            };
 
             match fetch_metadata(model_id, token_ref).await {
                 Ok(meta) => {
                     if let Some(s) = sp {
-                        s.finish_with_message(format!("{} Model metadata retrieved", "[ok]".green()));
+                        s.finish_with_message(format!(
+                            "{} Model metadata retrieved",
+                            "[ok]".green()
+                        ));
                     }
 
                     let specs = if !is_json {
@@ -141,10 +155,24 @@ async fn main() {
                     };
 
                     if is_json {
-                        let report = llm_check::build_verdict(model_id, weight_only, needed, vram_avail, tps, moe_info);
+                        let report = llm_check::build_verdict(
+                            model_id,
+                            weight_only,
+                            needed,
+                            vram_avail,
+                            tps,
+                            moe_info,
+                        );
                         println!("{}", serde_json::to_string_pretty(&report).unwrap());
                     } else {
-                        llm_check::print_verdict_table(model_id, weight_only, needed, vram_avail, tps, moe_info);
+                        llm_check::print_verdict_table(
+                            model_id,
+                            weight_only,
+                            needed,
+                            vram_avail,
+                            tps,
+                            moe_info,
+                        );
                     }
 
                     if *eco {
@@ -166,7 +194,11 @@ async fn main() {
                 }
                 Err(e) => {
                     if let Some(s) = sp {
-                        s.finish_with_message(format!("{} Failed to fetch model: {}", "[error]".red(), e));
+                        s.finish_with_message(format!(
+                            "{} Failed to fetch model: {}",
+                            "[error]".red(),
+                            e
+                        ));
                     } else {
                         eprintln!("{{\"error\": \"{}\"}}", e);
                     }
@@ -189,7 +221,11 @@ async fn main() {
                 specs.vram_gb.unwrap_or(specs.ram_gb * 0.5)
             };
 
-            let sp = if !is_json { Some(ui::spinner("Discovering models on Hugging Face...")) } else { None };
+            let sp = if !is_json {
+                Some(ui::spinner("Discovering models on Hugging Face..."))
+            } else {
+                None
+            };
             match discover_models(token_ref).await {
                 Ok(pool) => {
                     if let Some(s) = sp {
@@ -201,7 +237,8 @@ async fn main() {
                         ));
                     }
 
-                    let matches: Vec<_> = pool.into_iter()
+                    let matches: Vec<_> = pool
+                        .into_iter()
                         .filter(|item| item.params_bn * 0.57 * 1.2 <= vram)
                         .collect();
 
@@ -209,13 +246,22 @@ async fn main() {
                         println!("{}", serde_json::to_string_pretty(&matches).unwrap());
                     } else {
                         for item in &matches {
-                            println!("  {} {} ({})", "[match]".green(), item.name, item.model_id.dimmed());
+                            println!(
+                                "  {} {} ({})",
+                                "[match]".green(),
+                                item.name,
+                                item.model_id.dimmed()
+                            );
                         }
                     }
                 }
                 Err(e) => {
                     if let Some(s) = sp {
-                        s.finish_with_message(format!("{} Discovery failed: {}", "[error]".red(), e));
+                        s.finish_with_message(format!(
+                            "{} Discovery failed: {}",
+                            "[error]".red(),
+                            e
+                        ));
                     } else {
                         eprintln!("{{\"error\": \"{}\"}}", e);
                     }
@@ -223,7 +269,11 @@ async fn main() {
             }
         }
         Commands::Topology => {
-            let sp = if !is_json { Some(ui::spinner("Scanning GPU topology...")) } else { None };
+            let sp = if !is_json {
+                Some(ui::spinner("Scanning GPU topology..."))
+            } else {
+                None
+            };
 
             match hardware::scan_topology(stored_bw) {
                 Some(report) => {
@@ -243,7 +293,10 @@ async fn main() {
                 None => {
                     if let Some(s) = sp {
                         s.finish_and_clear();
-                        println!("{} No NVIDIA multi-GPU topology detected (Apple Silicon uses unified memory)", "[info]".cyan());
+                        println!(
+                            "{} No NVIDIA multi-GPU topology detected (Apple Silicon uses unified memory)",
+                            "[info]".cyan()
+                        );
                     } else {
                         eprintln!("{{\"error\": \"No NVIDIA GPUs detected\"}}");
                     }
@@ -255,7 +308,11 @@ async fn main() {
             clap_complete::generate(*shell, &mut cmd, "llm-check", &mut std::io::stdout());
         }
         Commands::Bench { iterations } => {
-            let sp = if !is_json { Some(ui::spinner("Running bandwidth benchmark...")) } else { None };
+            let sp = if !is_json {
+                Some(ui::spinner("Running bandwidth benchmark..."))
+            } else {
+                None
+            };
 
             let result = hardware::bench::measure_bandwidth(*iterations);
 
@@ -275,7 +332,11 @@ async fn main() {
             // Save to config
             config.benchmark_bandwidth_gbps = Some(result.bandwidth_gbps);
             if let Err(e) = config.save() {
-                eprintln!("{} Failed to save benchmark result: {}", "[warn]".yellow(), e);
+                eprintln!(
+                    "{} Failed to save benchmark result: {}",
+                    "[warn]".yellow(),
+                    e
+                );
             } else if !is_json {
                 println!("  {} Saved to config for future use", "[ok]".green());
             }
@@ -292,7 +353,11 @@ async fn main() {
                 config.hf_token = Some(token.clone());
                 match config.save() {
                     Ok(_) => {
-                        println!("{} Token saved to {}", "[ok]".green(), AppConfig::config_path().display());
+                        println!(
+                            "{} Token saved to {}",
+                            "[ok]".green(),
+                            AppConfig::config_path().display()
+                        );
                     }
                     Err(e) => eprintln!("{} Failed to save config: {}", "[error]".red(), e),
                 }
@@ -301,7 +366,11 @@ async fn main() {
                 let upper = region.to_uppercase();
                 let valid = SUPPORTED_REGIONS.iter().any(|(code, _)| *code == upper);
                 if !valid {
-                    eprintln!("{} Unknown region '{}'. Supported regions:", "[warn]".yellow(), region);
+                    eprintln!(
+                        "{} Unknown region '{}'. Supported regions:",
+                        "[warn]".yellow(),
+                        region
+                    );
                     for (code, desc) in SUPPORTED_REGIONS {
                         eprintln!("  {} - {}", code, desc);
                     }
@@ -320,11 +389,17 @@ async fn main() {
                         println!("HF Token: {}...{}", &t[..4], &t[t.len() - 4..]);
                     }
                     Some(_) => println!("HF Token: {}", "[set]".green()),
-                    None => println!("HF Token: {} (use `llm-check config set-token <TOKEN>`)", "Not set".yellow()),
+                    None => println!(
+                        "HF Token: {} (use `llm-check config set-token <TOKEN>`)",
+                        "Not set".yellow()
+                    ),
                 }
                 match config.benchmark_bandwidth_gbps {
                     Some(bw) => println!("Stored Bandwidth: {:.2} GB/s", bw),
-                    None => println!("Stored Bandwidth: {} (run `llm-check bench`)", "Not benchmarked".yellow()),
+                    None => println!(
+                        "Stored Bandwidth: {} (run `llm-check bench`)",
+                        "Not benchmarked".yellow()
+                    ),
                 }
                 match &config.carbon_region {
                     Some(r) => println!("Carbon Region: {}", r),

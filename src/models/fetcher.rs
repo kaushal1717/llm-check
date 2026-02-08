@@ -2,7 +2,10 @@
 use crate::models::{ModelMetadata, Suggestion};
 use regex::Regex;
 
-pub async fn fetch_metadata(model_id: &str, token: Option<&str>) -> Result<ModelMetadata, Box<dyn std::error::Error>> {
+pub async fn fetch_metadata(
+    model_id: &str,
+    token: Option<&str>,
+) -> Result<ModelMetadata, Box<dyn std::error::Error>> {
     let url = format!(
         "https://huggingface.co/{}/resolve/main/config.json",
         model_id
@@ -28,7 +31,9 @@ pub async fn fetch_metadata(model_id: &str, token: Option<&str>) -> Result<Model
     Ok(metadata)
 }
 
-pub async fn discover_models(token: Option<&str>) -> Result<Vec<Suggestion>, Box<dyn std::error::Error>> {
+pub async fn discover_models(
+    token: Option<&str>,
+) -> Result<Vec<Suggestion>, Box<dyn std::error::Error>> {
     let url = "https://huggingface.co/api/models?library=gguf&pipeline_tag=text-generation&sort=downloads&limit=20";
 
     let client = reqwest::Client::builder()
@@ -57,7 +62,7 @@ pub async fn discover_models(token: Option<&str>) -> Result<Vec<Suggestion>, Box
 
             suggestions.push(Suggestion {
                 model_id: id.to_string(),
-                name: id.split('/').last().unwrap_or(id).to_string(),
+                name: id.split('/').next_back().unwrap_or(id).to_string(),
                 params_bn: params,
             });
         }

@@ -7,17 +7,17 @@ pub fn carbon_intensity_for_region(region: &str) -> f64 {
         "US" => 385.0,
         "EU" => 320.0,
         "UK" => 230.0,
-        "DE" => 350.0,  // Germany
-        "FR" => 55.0,   // France (nuclear)
-        "NO" => 20.0,   // Norway (hydro)
-        "CN" => 580.0,  // China
-        "IN" => 700.0,  // India
-        "JP" => 450.0,  // Japan
-        "AU" => 650.0,  // Australia
-        "CA" => 120.0,  // Canada (hydro-heavy)
-        "BR" => 75.0,   // Brazil (hydro)
+        "DE" => 350.0, // Germany
+        "FR" => 55.0,  // France (nuclear)
+        "NO" => 20.0,  // Norway (hydro)
+        "CN" => 580.0, // China
+        "IN" => 700.0, // India
+        "JP" => 450.0, // Japan
+        "AU" => 650.0, // Australia
+        "CA" => 120.0, // Canada (hydro-heavy)
+        "BR" => 75.0,  // Brazil (hydro)
         "GLOBAL" => 440.0,
-        _ => 385.0,     // Default to US
+        _ => 385.0, // Default to US
     }
 }
 

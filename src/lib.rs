@@ -1,7 +1,7 @@
 // src/lib.rs
 
 use crate::hardware::AcceleratorType;
-use crate::models::{RECOMMENDATION_POOL, VramEstimator};
+use crate::models::RECOMMENDATION_POOL;
 use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, Color, Table};
@@ -13,7 +13,6 @@ pub mod hardware;
 pub mod models;
 pub mod ui;
 pub mod updater;
-
 
 /// A high-level wrapper to run the full scan and print results
 pub fn display_hardware_report() {
@@ -28,7 +27,11 @@ pub fn display_hardware_report() {
     match specs.accelerator_type {
         AcceleratorType::AppleSilicon => {
             let gpu_label = specs.gpu_name.as_deref().unwrap_or("Apple GPU");
-            println!("  GPU:  {} (Unified Memory: {:.2} GB)", gpu_label.green(), specs.ram_gb);
+            println!(
+                "  GPU:  {} (Unified Memory: {:.2} GB)",
+                gpu_label.green(),
+                specs.ram_gb
+            );
             println!("  BW:   {:.1} GB/s", specs.bandwidth_gbps);
             if specs.npu_available {
                 println!("  NPU:  {}", "Neural Engine available".green());
@@ -45,7 +48,10 @@ pub fn display_hardware_report() {
         }
     }
     if specs.gpu_count > 1 {
-        println!("  GPUs: {} devices detected (use `llm-check topology` for details)", specs.gpu_count.to_string().green());
+        println!(
+            "  GPUs: {} devices detected (use `llm-check topology` for details)",
+            specs.gpu_count.to_string().green()
+        );
     }
     println!("{}", "-----------------------".dimmed());
 }
@@ -57,7 +63,12 @@ pub fn get_smart_recommendation(user_vram_gb: f64) -> Vec<String> {
         let weight_gb = item.params_bn * 0.57 * 1.2;
 
         if weight_gb <= user_vram_gb {
-            suggestions.push(format!("  {} {}", "[match]".green(), format!("{} ({})", item.name, item.model_id)));
+            suggestions.push(format!(
+                "  {} {} ({})",
+                "[match]".green(),
+                item.name,
+                item.model_id
+            ));
         }
     }
 
@@ -65,15 +76,22 @@ pub fn get_smart_recommendation(user_vram_gb: f64) -> Vec<String> {
 }
 
 /// moe_info: Optional (num_experts, experts_per_token, active_weight_gb)
-pub fn print_verdict_table(model_name: &str, weight_gb: f64, vram_needed: f64, available_vram: f64, tps: f64, moe_info: Option<(u32, u32, f64)>) {
+pub fn print_verdict_table(
+    model_name: &str,
+    weight_gb: f64,
+    vram_needed: f64,
+    available_vram: f64,
+    tps: f64,
+    moe_info: Option<(u32, u32, f64)>,
+) {
     let mut table = Table::new();
     table
-       .load_preset(UTF8_FULL)
-       .apply_modifier(UTF8_ROUND_CORNERS)
-       .set_header(vec![
-           Cell::new("Metric").fg(Color::Cyan),
-           Cell::new("Value").fg(Color::Cyan),
-       ]);
+        .load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_header(vec![
+            Cell::new("Metric").fg(Color::Cyan),
+            Cell::new("Value").fg(Color::Cyan),
+        ]);
 
     let (vram_color, verdict_text) = if available_vram >= vram_needed {
         (Color::Green, "PERFECT FIT")
@@ -86,7 +104,8 @@ pub fn print_verdict_table(model_name: &str, weight_gb: f64, vram_needed: f64, a
     if let Some((num_exp, active_exp, active_wt)) = moe_info {
         table.add_row(vec![
             Cell::new("Architecture"),
-            Cell::new(format!("MoE ({}/{} experts active)", active_exp, num_exp)).fg(Color::Magenta),
+            Cell::new(format!("MoE ({}/{} experts active)", active_exp, num_exp))
+                .fg(Color::Magenta),
         ]);
         table.add_row(vec![
             Cell::new("Total Weight (GB)"),
@@ -123,7 +142,12 @@ pub fn print_verdict_table(model_name: &str, weight_gb: f64, vram_needed: f64, a
         Cell::new(verdict_text).fg(vram_color),
     ]);
 
-    println!("\n{} {}\n{}", "Final Verdict for:".bold(), model_name.cyan(), table);
+    println!(
+        "\n{} {}\n{}",
+        "Final Verdict for:".bold(),
+        model_name.cyan(),
+        table
+    );
 }
 
 #[derive(Serialize)]
@@ -143,7 +167,14 @@ pub struct VerdictReport {
     pub verdict: String,
 }
 
-pub fn build_verdict(model_name: &str, weight_gb: f64, vram_needed: f64, available_vram: f64, tps: f64, moe_info: Option<(u32, u32, f64)>) -> VerdictReport {
+pub fn build_verdict(
+    model_name: &str,
+    weight_gb: f64,
+    vram_needed: f64,
+    available_vram: f64,
+    tps: f64,
+    moe_info: Option<(u32, u32, f64)>,
+) -> VerdictReport {
     let verdict = if available_vram >= vram_needed {
         "PERFECT_FIT"
     } else if (available_vram + 4.0) >= vram_needed {
@@ -216,7 +247,11 @@ pub fn print_eco_table(eco: &models::EcoReport) {
 
     table.add_row(vec![
         Cell::new("Region"),
-        Cell::new(format!("{} ({:.0} g CO2/kWh)", eco.region, eco.carbon_intensity_g_per_kwh)).fg(Color::White),
+        Cell::new(format!(
+            "{} ({:.0} g CO2/kWh)",
+            eco.region, eco.carbon_intensity_g_per_kwh
+        ))
+        .fg(Color::White),
     ]);
 
     println!("\n{}\n{}", "Eco Impact Report".bold().green(), table);
@@ -242,7 +277,11 @@ pub fn print_topology_table(report: &hardware::TopologyReport) {
             (Some(g), Some(width)) => format!("Gen{} x{}", g, width),
             _ => "N/A".to_string(),
         };
-        let pcie_color = if gpu.pcie_bottleneck { Color::Yellow } else { Color::White };
+        let pcie_color = if gpu.pcie_bottleneck {
+            Color::Yellow
+        } else {
+            Color::White
+        };
 
         let nvlink_str = if gpu.nvlink_active {
             match gpu.nvlink_version {
@@ -252,7 +291,11 @@ pub fn print_topology_table(report: &hardware::TopologyReport) {
         } else {
             "---".to_string()
         };
-        let nvlink_color = if gpu.nvlink_active { Color::Green } else { Color::DarkGrey };
+        let nvlink_color = if gpu.nvlink_active {
+            Color::Green
+        } else {
+            Color::DarkGrey
+        };
 
         let tdp_str = match gpu.tdp_watts {
             Some(w) => format!("{:.0}W", w),

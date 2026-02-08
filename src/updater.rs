@@ -19,7 +19,11 @@ pub async fn check_for_update() {
                 );
                 println!("  Run `llm-check update` to install");
             } else {
-                println!("{} Already on the latest version ({})", "[ok]".green(), current);
+                println!(
+                    "{} Already on the latest version ({})",
+                    "[ok]".green(),
+                    current
+                );
             }
         }
         Ok(Err(e)) => {

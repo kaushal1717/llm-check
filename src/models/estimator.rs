@@ -40,7 +40,7 @@ impl VramEstimator for ModelMetadata {
         // 4. Calculate KV Cache
         // Formula: (2 * layers * context * (hidden_size / GQA_factor) * 2 bytes) / 10^9
         let gqa_factor = if self.kv_heads > 0.0 && self.heads > 0.0 {
-            self.heads as f64 / self.kv_heads as f64
+            self.heads / self.kv_heads
         } else {
             1.0
         };

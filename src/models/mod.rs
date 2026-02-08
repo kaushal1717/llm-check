@@ -52,7 +52,7 @@ mod fetcher;
 mod performance;
 
 // 3. "Export" them so they are accessible from models::...
-pub use eco::{EcoReport, calculate_eco, SUPPORTED_REGIONS};
+pub use eco::{EcoReport, SUPPORTED_REGIONS, calculate_eco};
 pub use estimator::VramEstimator;
-pub use fetcher::{fetch_metadata, discover_models};
+pub use fetcher::{discover_models, fetch_metadata};
 pub use performance::{PerformanceEngine, PerformancePredictor};

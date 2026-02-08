@@ -62,7 +62,9 @@ fn detect_apple_silicon() -> Option<AppleSiliconInfo> {
         .output()
         .ok()?;
 
-    let cpu_brand = String::from_utf8_lossy(&cpu_output.stdout).trim().to_string();
+    let cpu_brand = String::from_utf8_lossy(&cpu_output.stdout)
+        .trim()
+        .to_string();
 
     // Only proceed if this is Apple Silicon
     if !cpu_brand.starts_with("Apple") {
@@ -186,28 +188,27 @@ pub fn scan_components_with_config(stored_bandwidth: Option<f64>) -> SystemSpecs
     let mut lut_bandwidth: Option<f64> = None;
     let mut tdp_watts: Option<f64> = None;
 
-    if let Ok(nvml) = Nvml::init() {
-        if let Ok(device) = nvml.device_by_index(0) {
-            let name = device.name().unwrap_or_default();
-            lut_bandwidth = nvidia_bandwidth_lut(&name);
-            tdp_watts = nvidia_tdp_lut(&name);
+    if let Ok(nvml) = Nvml::init()
+        && let Ok(device) = nvml.device_by_index(0)
+    {
+        let name = device.name().unwrap_or_default();
+        lut_bandwidth = nvidia_bandwidth_lut(&name);
+        tdp_watts = nvidia_tdp_lut(&name);
 
-            gpu_name = Some(name);
-            accelerator_type = AcceleratorType::NvidiaGpu;
-            if let Ok(mem) = device.memory_info() {
-                vram_gb = Some(mem.total as f64 / (1024.0 * 1024.0 * 1024.0));
-            }
+        gpu_name = Some(name);
+        accelerator_type = AcceleratorType::NvidiaGpu;
+        if let Ok(mem) = device.memory_info() {
+            vram_gb = Some(mem.total as f64 / (1024.0 * 1024.0 * 1024.0));
         }
     }
 
     // Bandwidth priority: GPU-specific LUT > stored benchmark > conservative default
-    let bandwidth = lut_bandwidth
-        .or(stored_bandwidth)
-        .unwrap_or(50.0);
+    let bandwidth = lut_bandwidth.or(stored_bandwidth).unwrap_or(50.0);
 
     // Count GPUs
     let gpu_count = if let Ok(nvml) = Nvml::init() {
-        nvml.device_count().unwrap_or(if gpu_name.is_some() { 1 } else { 0 })
+        nvml.device_count()
+            .unwrap_or(if gpu_name.is_some() { 1 } else { 0 })
     } else if gpu_name.is_some() {
         1
     } else {
